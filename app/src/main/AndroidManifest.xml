@@ -13,6 +13,9 @@
         android:theme="@style/Theme.LearnMaterialDesign"
         tools:targetApi="31">
         <activity
+            android:name=".FruitActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="Kennem">

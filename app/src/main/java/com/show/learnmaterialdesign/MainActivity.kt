@@ -3,29 +3,50 @@ package com.show.learnmaterialdesign
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.snackbar.Snackbar
+import com.show.learnmaterialdesign.adapter.FruitAdapter
 import com.show.learnmaterialdesign.databinding.ActivityMainBinding
+import com.show.learnmaterialdesign.entity.Fruit
 import com.show.learnmaterialdesign.util.ToastUtil
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
+//    val fruits = mutableListOf(
+//        Fruit("Apple", R.drawable.apple), Fruit("Banana",
+//        R.drawable.banana), Fruit("Orange", R.drawable.orange), Fruit("Watermelon",
+//        R.drawable.watermelon), Fruit("Pear", R.drawable.pear), Fruit("Grape",
+//        R.drawable.grape), Fruit("Pineapple", R.drawable.pineapple), Fruit("Strawberry",
+//        R.drawable.strawberry), Fruit("Cherry", R.drawable.cherry), Fruit("Mango",
+//        R.drawable.mango))
+
+    val fruits = mutableListOf(Fruit("Abs Draw", R.drawable.abs))
+
+    val fruitList = ArrayList<Fruit>()
+
     private val mBinding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        hideStatusBar()
         enableEdgeToEdge()
         setContentView(mBinding.root)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
+//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+//            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+//            insets
+//        }
 
         setSupportActionBar(mBinding.toolbar)
 
@@ -39,7 +60,41 @@ class MainActivity : AppCompatActivity() {
             mBinding.drawerLayout.closeDrawers()
             true
         }
+
+        mBinding.fab.setOnClickListener { view ->
+//            ToastUtil.show(this, "You clicked Fab")
+            Snackbar.make(view, "Data deleted", Snackbar.LENGTH_SHORT)
+                .setAction("Undo") {
+                    Toast.makeText(this, "Data restored", Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
+
+        initFruits()
+        val layoutManager = GridLayoutManager(this, 2)
+        mBinding.recyclerView.layoutManager = layoutManager
+        val adapter = FruitAdapter(this, fruitList)
+        mBinding.recyclerView.adapter = adapter
+        mBinding.recyclerView.isNestedScrollingEnabled = true
+
+
+        mBinding.swipeRefresh.setColorSchemeResources(R.color.colorPrimary)
+        mBinding.swipeRefresh.setOnRefreshListener {
+            refreshFruits(adapter)
+        }
     }
+
+    // 隐藏状态栏的方法
+    private fun hideStatusBar() {
+        // 使用 WindowInsets 设置沉浸式状态栏
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                )
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.toolbar, menu)
@@ -68,6 +123,25 @@ class MainActivity : AppCompatActivity() {
             )
         }
         return true
+    }
+
+    private fun initFruits() {
+        fruitList.clear()
+        repeat(100) {
+            val index = (0 until fruits.size).random()
+            fruitList.add(fruits[index])
+        }
+    }
+
+    private fun refreshFruits(adapter: FruitAdapter) {
+        thread {
+            Thread.sleep(2000)
+            runOnUiThread {
+                initFruits()
+                adapter.notifyDataSetChanged()
+                mBinding.swipeRefresh.isRefreshing = false
+            }
+        }
     }
 
 }
